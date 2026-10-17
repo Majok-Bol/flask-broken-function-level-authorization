@@ -1,0 +1,133 @@
+# =========================
+# Environment files
+# =========================
+
+# Ignore real environment files
+.env
+.env.local
+.env.*.local
+
+# Keep example file
+!.env.example
+
+# =========================
+# Virtual environments
+# =========================
+
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+flask_env/
+
+
+# =========================
+# Python
+# =========================
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg
+*.egg-info/
+.installed.cfg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# =========================
+# Testing / Coverage
+# =========================
+
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# =========================
+# Jupyter
+# =========================
+
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+*.ipynb_checkpoints
+
+# =========================
+# IDEs / Editors
+# =========================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================
+# Logs
+# =========================
+
+*.log
+logs/
+
+# =========================
+# Databases
+# =========================
+
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Data files
+# =========================
+
+*.csv
+*.xlsx
+*.xls
+users.csv
+orders.csv
+order_items.csv
+payments.csv
+
+# =========================
+# Docker
+# =========================
+
+docker-compose.override.yml
+
+# =========================
+# Node.js
+# =========================
+
+node_modules/
+
+# =========================
+# Operating System
+# =========================
+
+.DS_Store
+Thumbs.db
