@@ -15,6 +15,7 @@ from flask_jwt_extended import(
 from datetime import timedelta
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
+from functools import wraps
 load_dotenv()
 app=Flask(__name__)
 #database url
@@ -55,6 +56,7 @@ migrate.init_app(app,db)
 # def hello():
 #     return 'Hello world'
 #register user
+#auth endpoints
 @app.post("/api/v1/auth/register")
 def register():
     #get data
@@ -114,6 +116,10 @@ def login():
     password=data.get("password")
     #check username in the database
     user=User.query.filter_by(username=username).first()
+    if not username or not password:
+        return jsonify({
+            "error":"Username and password required"
+        }),400
     if user is None:
         return jsonify({
             "error":"Username not found"
@@ -165,7 +171,7 @@ def refresh_token():
 #handle jwt errors
 @jwt.invalid_token_loader
 def invalid_token_loader(error):
-    return json({
+    return jsonify({
         "error":"Invalid token"
     }),401
 
@@ -305,7 +311,52 @@ def delete_note(id):
     db.session.commit()
     return "",201
 
-    
+#admin decorator
+def admin_required(fn):
+    @wraps(fn)
+    @jwt_required()
+    def wrapper(*args,**kwargs):
+        user_id=get_jwt_identity()
+        # user=User.query.filter_by(id=user_id)
+        user=db.session.get(User,int(user_id))
+        if user is None or not user.is_admin:
+            return jsonify({
+                "error":"Admin access required"
+            }),403
+        return fn(*args,**kwargs)
+    return wrapper
+
+#admin endpoints
+@app.get("/api/v1/admin/dashboard")
+@admin_required
+def admin_dashboard():
+    total_users=User.query.count()
+    total_notes=Notes.query.count()
+    admins=User.query.filter_by(is_admin=True).count()
+    return jsonify({
+        "stats":{
+            "total_users":total_users,
+            "total_notes":total_notes,
+            "total_admins":admins
+        }
+    }),200
+
+    #fetch users
+@app.get("/api/v1/admin/users")
+@admin_required
+def admin_list_users():
+    users=User.query.all()
+    return jsonify({
+        "count":len(users),
+        "users":[{
+            "id":user.id,
+            "username":user.username,
+            "email":user.email,
+          "is_admin":user.is_admin,
+          "notes_count":len(user.notes)
+
+        } for user in users]
+    }),200
 #database model
 #users table
 class User(db.Model):
@@ -313,7 +364,9 @@ class User(db.Model):
     username=db.Column(db.String(50),nullable=False)
     email=db.Column(db.String(100),nullable=False)
     password=db.Column(db.String(255),nullable=False)
-    notes=db.relationship("Notes",back_populates="owner")
+    #add admin role
+    is_admin=db.Column(db.Boolean,default=False,nullable=False)
+    notes=db.relationship("Notes",back_populates="owner",cascade="all,delete-orphan")
 
 #notes table
 class Notes(db.Model):
@@ -323,6 +376,18 @@ class Notes(db.Model):
     user_id=db.Column(db.Integer,db.ForeignKey("user.id"))
     #connect notes to users table
     owner=db.relationship("User",back_populates="notes")
+
+
+
+#add shell context to access db,User,Notes,bcrypt directly in the flash shell without importing them
+@app.shell_context_processor
+def make_shell_context():
+    return {
+        "db":db,
+        "User":User,
+        "Notes":Notes,
+        "bcrypt":bcrypt
+    }
 if __name__=="__main__":
     with app.app_context():
         db.create_all()
